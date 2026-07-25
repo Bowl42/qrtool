@@ -31,15 +31,3 @@ jobs:
 
       - name: Vet
         run: go vet ./...
-
-  docker:
-    name: Docker build
-    runs-on: ubuntu-latest
-    needs: test
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build image
-        run: docker build -t qrtool:ci .

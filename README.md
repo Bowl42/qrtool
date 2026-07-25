@@ -17,6 +17,13 @@ docker build -t qrtool .
 docker run --rm -p 8080:8080 qrtool
 ```
 
+Published images are available from GitHub Container Registry:
+
+```sh
+docker pull ghcr.io/bowl42/qrtool:latest
+docker run --rm -p 8080:8080 ghcr.io/bowl42/qrtool:latest
+```
+
 ## API
 
 ```text
