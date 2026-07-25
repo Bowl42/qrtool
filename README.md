@@ -26,6 +26,8 @@ docker run --rm -p 8080:8080 ghcr.io/bowl42/qrtool:latest
 
 ## API
 
+Open `/` in a browser for a small QR Code form.
+
 ```text
 GET /?text=hello
 GET /anything.png?text=hello

@@ -21,6 +21,40 @@ func TestHandleHealthz(t *testing.T) {
 	}
 }
 
+func TestHandleHome(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	rec := httptest.NewRecorder()
+
+	New().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", rec.Code, rec.Body.String())
+	}
+	if got := rec.Header().Get("Content-Type"); got != "text/html; charset=utf-8" {
+		t.Fatalf("Content-Type = %q", got)
+	}
+	if !strings.Contains(rec.Body.String(), "<title>qrtool</title>") {
+		t.Fatal("response is not the home page")
+	}
+}
+
+func TestHandleRootQRPNG(t *testing.T) {
+	req := httptest.NewRequest("GET", "/?text=hello", nil)
+	rec := httptest.NewRecorder()
+
+	New().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", rec.Code, rec.Body.String())
+	}
+	if got := rec.Header().Get("Content-Type"); got != "image/png" {
+		t.Fatalf("Content-Type = %q", got)
+	}
+	if got := rec.Header().Get("Content-Disposition"); got != `inline; filename=qrcode.png` {
+		t.Fatalf("Content-Disposition = %q", got)
+	}
+}
+
 func TestHandleQRPNG(t *testing.T) {
 	req := httptest.NewRequest("GET", "/demo.png?text=hello", nil)
 	rec := httptest.NewRecorder()
@@ -38,6 +72,20 @@ func TestHandleQRPNG(t *testing.T) {
 	}
 	if !strings.HasPrefix(rec.Body.String(), "\x89PNG") {
 		t.Fatal("response is not a PNG")
+	}
+}
+
+func TestHandleNamedQRRequiresText(t *testing.T) {
+	req := httptest.NewRequest("GET", "/demo.png", nil)
+	rec := httptest.NewRecorder()
+
+	New().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, body = %s", rec.Code, rec.Body.String())
+	}
+	if rec.Body.String() != "missing text\n" {
+		t.Fatalf("body = %q", rec.Body.String())
 	}
 }
 

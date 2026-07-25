@@ -22,6 +22,11 @@ func handleHealthz(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleQR(w http.ResponseWriter, r *http.Request) {
+	if shouldShowHome(r) {
+		handleHome(w, r)
+		return
+	}
+
 	p, err := parseParams(r)
 	if err != nil {
 		if writeParamError(w, err) {
