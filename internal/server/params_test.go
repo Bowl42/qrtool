@@ -27,7 +27,7 @@ func TestParseParamsAcceptsExplicitQRType(t *testing.T) {
 }
 
 func TestParseParamsPath(t *testing.T) {
-	req := httptest.NewRequest("GET", "/demo.svg?text=hello&size=512&margin=2&level=h", nil)
+	req := httptest.NewRequest("GET", "/demo.svg?text=hello&size=512&margin=2&level=h&fg=123456&bg=abcdef", nil)
 
 	p, err := parseParams(req)
 	if err != nil {
@@ -36,6 +36,12 @@ func TestParseParamsPath(t *testing.T) {
 
 	if p.Filename != "demo" || p.Format != "svg" || p.Size != 512 || p.Margin != 2 || p.Level != "h" {
 		t.Fatalf("unexpected params: %+v", p)
+	}
+	if p.Foreground.R != 0x12 || p.Foreground.G != 0x34 || p.Foreground.B != 0x56 {
+		t.Fatalf("unexpected foreground: %+v", p.Foreground)
+	}
+	if p.Background.R != 0xab || p.Background.G != 0xcd || p.Background.B != 0xef {
+		t.Fatalf("unexpected background: %+v", p.Background)
 	}
 }
 
@@ -59,6 +65,15 @@ func TestParseParamsRejectsUnsupportedType(t *testing.T) {
 
 func TestParseParamsRejectsUnsupportedFormat(t *testing.T) {
 	req := httptest.NewRequest("GET", "/demo.jpg?text=hello", nil)
+
+	_, err := parseParams(req)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestParseParamsRejectsInvalidColor(t *testing.T) {
+	req := httptest.NewRequest("GET", "/demo.png?text=hello&fg=wat", nil)
 
 	_, err := parseParams(req)
 	if err == nil {

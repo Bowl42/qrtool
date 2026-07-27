@@ -29,11 +29,13 @@ const (
 )
 
 type Options struct {
-	Text   string
-	Format Format
-	Level  Level
-	Size   int
-	Margin int
+	Text       string
+	Format     Format
+	Level      Level
+	Size       int
+	Margin     int
+	Foreground color.RGBA
+	Background color.RGBA
 }
 
 type Image struct {
@@ -85,9 +87,9 @@ func Generate(opts Options) (Image, error) {
 	var body []byte
 	switch opts.Format {
 	case FormatPNG:
-		body, err = renderPNG(matrix, opts.Size, opts.Margin)
+		body, err = renderPNG(matrix, opts.Size, opts.Margin, defaultColor(opts.Foreground, color.RGBA{A: 255}), defaultColor(opts.Background, color.RGBA{R: 255, G: 255, B: 255, A: 255}))
 	case FormatSVG:
-		body, err = renderSVG(matrix, opts.Text, opts.Margin)
+		body, err = renderSVG(matrix, opts.Text, opts.Margin, defaultColor(opts.Foreground, color.RGBA{A: 255}), defaultColor(opts.Background, color.RGBA{R: 255, G: 255, B: 255, A: 255}))
 	default:
 		return Image{}, fmt.Errorf("unsupported qr format: %s", opts.Format)
 	}
@@ -101,19 +103,16 @@ func Generate(opts Options) (Image, error) {
 	}, nil
 }
 
-func renderPNG(matrix [][]bool, size, margin int) ([]byte, error) {
+func renderPNG(matrix [][]bool, size, margin int, foreground, background color.RGBA) ([]byte, error) {
 	modules := len(matrix) + margin*2
 	if modules <= 0 {
 		return nil, fmt.Errorf("invalid qr dimensions")
 	}
 
 	img := image.NewRGBA(image.Rect(0, 0, size, size))
-	white := color.RGBA{R: 255, G: 255, B: 255, A: 255}
-	black := color.RGBA{A: 255}
-
 	for y := 0; y < size; y++ {
 		for x := 0; x < size; x++ {
-			img.Set(x, y, white)
+			img.Set(x, y, background)
 		}
 	}
 
@@ -128,7 +127,7 @@ func renderPNG(matrix [][]bool, size, margin int) ([]byte, error) {
 			y1 := (y + margin + 1) * size / modules
 			for py := y0; py < y1; py++ {
 				for px := x0; px < x1; px++ {
-					img.Set(px, py, black)
+					img.Set(px, py, foreground)
 				}
 			}
 		}
@@ -141,7 +140,7 @@ func renderPNG(matrix [][]bool, size, margin int) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-func renderSVG(matrix [][]bool, title string, margin int) ([]byte, error) {
+func renderSVG(matrix [][]bool, title string, margin int, foreground, background color.RGBA) ([]byte, error) {
 	size := len(matrix) + margin*2
 	if size <= 0 {
 		return nil, fmt.Errorf("invalid qr dimensions")
@@ -149,8 +148,8 @@ func renderSVG(matrix [][]bool, title string, margin int) ([]byte, error) {
 
 	var out strings.Builder
 	out.WriteString(fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" shape-rendering="crispEdges">`, size, size))
-	out.WriteString(`<rect width="100%" height="100%" fill="#fff"/>`)
-	out.WriteString(`<path fill="#000" d="`)
+	out.WriteString(fmt.Sprintf(`<rect width="100%%" height="100%%" fill="%s"/>`, hexColor(background)))
+	out.WriteString(fmt.Sprintf(`<path fill="%s" d="`, hexColor(foreground)))
 
 	for y, row := range matrix {
 		for x, dark := range row {
@@ -165,6 +164,17 @@ func renderSVG(matrix [][]bool, title string, margin int) ([]byte, error) {
 	out.WriteString(html.EscapeString(title))
 	out.WriteString(`</title></svg>`)
 	return []byte(out.String()), nil
+}
+
+func defaultColor(value, fallback color.RGBA) color.RGBA {
+	if value.A == 0 {
+		return fallback
+	}
+	return value
+}
+
+func hexColor(value color.RGBA) string {
+	return fmt.Sprintf("#%02x%02x%02x", value.R, value.G, value.B)
 }
 
 func bitmap(text string, level Level) ([][]bool, error) {

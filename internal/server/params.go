@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"image/color"
 	"net/http"
 	"path"
 	"strconv"
@@ -19,12 +20,14 @@ const (
 )
 
 type params struct {
-	Text     string
-	Filename string
-	Format   qr.Format
-	Size     int
-	Level    qr.Level
-	Margin   int
+	Text       string
+	Filename   string
+	Format     qr.Format
+	Size       int
+	Level      qr.Level
+	Margin     int
+	Foreground color.RGBA
+	Background color.RGBA
 }
 
 type paramError struct {
@@ -72,13 +75,25 @@ func parseParams(r *http.Request) (params, error) {
 		return params{}, paramError{status: http.StatusBadRequest, message: "invalid level"}
 	}
 
+	foreground, err := parseHexColor(q.Get("fg"), color.RGBA{A: 255}, "fg")
+	if err != nil {
+		return params{}, err
+	}
+
+	background, err := parseHexColor(q.Get("bg"), color.RGBA{R: 255, G: 255, B: 255, A: 255}, "bg")
+	if err != nil {
+		return params{}, err
+	}
+
 	return params{
-		Text:     text,
-		Filename: filename,
-		Format:   format,
-		Size:     size,
-		Level:    level,
-		Margin:   margin,
+		Text:       text,
+		Filename:   filename,
+		Format:     format,
+		Size:       size,
+		Level:      level,
+		Margin:     margin,
+		Foreground: foreground,
+		Background: background,
 	}, nil
 }
 
@@ -135,6 +150,29 @@ func sanitizeFilename(name string) string {
 		return defaultFilename
 	}
 	return name
+}
+
+func parseHexColor(raw string, fallback color.RGBA, name string) (color.RGBA, error) {
+	if raw == "" {
+		return fallback, nil
+	}
+
+	value := strings.TrimPrefix(raw, "#")
+	if len(value) != 6 {
+		return color.RGBA{}, paramError{status: http.StatusBadRequest, message: fmt.Sprintf("invalid %s", name)}
+	}
+
+	n, err := strconv.ParseUint(value, 16, 32)
+	if err != nil {
+		return color.RGBA{}, paramError{status: http.StatusBadRequest, message: fmt.Sprintf("invalid %s", name)}
+	}
+
+	return color.RGBA{
+		R: uint8(n >> 16),
+		G: uint8(n >> 8),
+		B: uint8(n),
+		A: 255,
+	}, nil
 }
 
 func defaultString(value, fallback string) string {

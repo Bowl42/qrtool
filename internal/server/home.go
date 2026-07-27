@@ -228,6 +228,22 @@ const homeHTML = `<!doctype html>
       flex-direction: column;
       gap: 22px;
     }
+    .mode-panel {
+      display: none;
+      flex-direction: column;
+      gap: 22px;
+    }
+    .mode-panel[data-active="true"] {
+      display: flex;
+    }
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px;
+    }
+    .span-2 {
+      grid-column: 1 / -1;
+    }
     label {
       display: flex;
       flex-direction: column;
@@ -366,6 +382,62 @@ const homeHTML = `<!doctype html>
       border-color: var(--chip-bg);
       background: var(--chip-bg);
       color: var(--chip-fg);
+    }
+    .palette-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+    .swatch {
+      width: 46px;
+      height: 46px;
+      border-radius: 11px;
+      border: 1.5px solid var(--line);
+      background: var(--swatch-bg);
+      padding: 0;
+      display: grid;
+      place-items: center;
+    }
+    .swatch[aria-pressed="true"] {
+      border-color: var(--accent);
+    }
+    .swatch span {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      background: var(--swatch-fg);
+      display: block;
+    }
+    .switch {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 0;
+      text-align: left;
+    }
+    .switch-track {
+      width: 38px;
+      height: 22px;
+      border-radius: 999px;
+      background: var(--line);
+      display: flex;
+      align-items: center;
+      padding: 3px;
+      transition: background .18s;
+    }
+    .switch[aria-pressed="true"] .switch-track {
+      background: var(--accent);
+      justify-content: flex-end;
+    }
+    .switch-knob {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: #fff;
+      display: block;
     }
     .filebox {
       display: flex;
@@ -547,6 +619,8 @@ const homeHTML = `<!doctype html>
       .top-actions { margin-left: 32px; }
       main { padding: 24px 16px 132px; }
       h1 { font-size: 24px; }
+      .field-grid { grid-template-columns: 1fr; }
+      .span-2 { grid-column: auto; }
       .secondary-row, .chip-row { gap: 7px; }
       .mbar-download { padding: 13px 16px; }
     }
@@ -575,32 +649,120 @@ const homeHTML = `<!doctype html>
     <div class="frame">
       <nav class="rail" aria-label="Code type">
         <div class="railcap mono" data-i18n="kind">内容类型</div>
-        <button type="button" disabled title="Not supported yet"><span class="mono">01</span><b data-i18n="typeUrl">网址</b></button>
-        <button type="button" aria-current="page"><span class="mono">02</span><b data-i18n="typeText">纯文本</b></button>
-        <button type="button" disabled title="Not supported yet"><span class="mono">03</span><b data-i18n="typeWifi">WiFi</b></button>
-        <button type="button" disabled title="Not supported yet"><span class="mono">04</span><b data-i18n="typeCard">名片</b></button>
-        <button type="button" disabled title="Not supported yet"><span class="mono">05</span><b data-i18n="typeMail">邮件</b></button>
+        <button type="button" data-kind="url"><span class="mono">01</span><b data-i18n="typeUrl">网址</b></button>
+        <button type="button" data-kind="text"><span class="mono">02</span><b data-i18n="typeText">纯文本</b></button>
+        <button type="button" data-kind="wifi" aria-current="page"><span class="mono">03</span><b data-i18n="typeWifi">WiFi</b></button>
+        <button type="button" data-kind="card"><span class="mono">04</span><b data-i18n="typeCard">名片</b></button>
+        <button type="button" data-kind="mail"><span class="mono">05</span><b data-i18n="typeMail">邮件</b></button>
       </nav>
 
       <main>
         <section>
-          <h1 data-i18n="heading">生成一段文本二维码</h1>
-          <div class="subhead" data-i18n="subheading">任意文字原样编码，扫码后以文本形式显示。</div>
+          <h1 id="heading">生成 WiFi 连接码</h1>
+          <div class="subhead" id="subheading">客人扫码即可入网，无需口头告知密码。</div>
         </section>
 
         <form id="qr-form">
+          <div class="mode-panel" data-panel="url">
+            <label>
+              <span class="eyebrow mono" data-i18n="linkLabel">链接地址</span>
+              <input id="url" type="url" value="https://example.com/hello" placeholder="https://">
+            </label>
+          </div>
+
+          <div class="mode-panel" data-panel="text">
+            <label>
+              <div class="label-row">
+                <span class="eyebrow mono" data-i18n="textLabel">文本内容</span>
+                <span id="count" class="count mono">5 / 2953</span>
+              </div>
+              <textarea id="text" maxlength="2953">hello</textarea>
+            </label>
+          </div>
+
+          <div class="mode-panel" data-panel="wifi" data-active="true">
+            <label>
+              <span class="eyebrow mono" data-i18n="ssid">网络名称 SSID</span>
+              <input id="ssid" value="Cafe_Guest" placeholder="MyNetwork">
+            </label>
+            <div class="control">
+              <span class="eyebrow mono" data-i18n="enc">加密方式</span>
+              <div class="chip-row" id="enc-row">
+                <button class="chip mono" type="button" data-enc="WPA" aria-pressed="true">WPA</button>
+                <button class="chip mono" type="button" data-enc="WEP" aria-pressed="false">WEP</button>
+                <button class="chip mono" type="button" data-enc="nopass" aria-pressed="false" data-i18n="nopass">无密码</button>
+              </div>
+            </div>
+            <label id="password-field">
+              <span class="eyebrow mono" data-i18n="password">密码</span>
+              <input id="password" value="coffee2026">
+            </label>
+            <button class="switch" id="hidden" type="button" aria-pressed="false">
+              <span class="switch-track"><span class="switch-knob"></span></span>
+              <span data-i18n="hidden">隐藏网络（不广播 SSID）</span>
+            </button>
+          </div>
+
+          <div class="mode-panel" data-panel="card">
+            <div class="field-grid">
+              <label>
+                <span class="eyebrow mono" data-i18n="cardName">姓名</span>
+                <input id="card-name" value="张伟">
+              </label>
+              <label>
+                <span class="eyebrow mono" data-i18n="cardOrg">公司</span>
+                <input id="card-org" value="码上生成">
+              </label>
+              <label>
+                <span class="eyebrow mono" data-i18n="cardTitle">职位</span>
+                <input id="card-title" value="产品设计">
+              </label>
+              <label>
+                <span class="eyebrow mono" data-i18n="cardTel">电话</span>
+                <input id="card-tel" value="+86 138 0000 0000">
+              </label>
+              <label class="span-2">
+                <span class="eyebrow mono" data-i18n="cardEmail">邮箱</span>
+                <input id="card-email" type="email" value="wei@example.com">
+              </label>
+              <label class="span-2">
+                <span class="eyebrow mono" data-i18n="cardSite">网站</span>
+                <input id="card-site" value="example.com">
+              </label>
+            </div>
+          </div>
+
+          <div class="mode-panel" data-panel="mail">
+            <label>
+              <span class="eyebrow mono" data-i18n="mailTo">收件人</span>
+              <input id="mail-to" type="email" value="hi@example.com">
+            </label>
+            <label>
+              <span class="eyebrow mono" data-i18n="mailSubject">主题</span>
+              <input id="mail-subject" value="你好">
+            </label>
+            <label>
+              <span class="eyebrow mono" data-i18n="mailBody">正文</span>
+              <textarea id="mail-body"></textarea>
+            </label>
+          </div>
+
+          <button class="download" type="submit" data-i18n="openQR">打开二维码</button>
+        </form>
+
+        <template id="old-text-template">
           <label>
             <div class="label-row">
               <span class="eyebrow mono" data-i18n="textLabel">文本内容</span>
-              <span id="count" class="count mono">5 / 2953</span>
+              <span class="count mono">5 / 2953</span>
             </div>
-            <textarea id="text" required autofocus maxlength="2953">hello</textarea>
+            <textarea maxlength="2953">hello</textarea>
           </label>
-        </form>
+        </template>
 
         <section class="encoded" aria-label="Encoded payload">
           <div class="eyebrow mono" data-i18n="encoded">编码内容</div>
-          <div id="payload" class="encoded-output mono">hello</div>
+          <div id="payload" class="encoded-output mono">WIFI:T:WPA;S:Cafe_Guest;P:coffee2026;;</div>
         </section>
       </main>
 
@@ -639,6 +801,17 @@ const homeHTML = `<!doctype html>
             <div class="chip-row" id="format-row">
               <button class="chip mono" type="button" data-format="png" aria-pressed="true">PNG</button>
               <button class="chip mono" type="button" data-format="svg" aria-pressed="false">SVG</button>
+            </div>
+          </div>
+
+          <div class="control">
+            <div class="eyebrow mono" data-i18n="color">配色</div>
+            <div class="palette-row" id="palette-row">
+              <button class="swatch" type="button" data-palette="classic" data-fg="14130f" data-bg="ffffff" aria-pressed="true" title="Classic" style="--swatch-fg:#14130f;--swatch-bg:#ffffff"><span></span></button>
+              <button class="swatch" type="button" data-palette="ember" data-fg="d2450b" data-bg="fff3ec" aria-pressed="false" title="Ember" style="--swatch-fg:#d2450b;--swatch-bg:#fff3ec"><span></span></button>
+              <button class="swatch" type="button" data-palette="pine" data-fg="1f4d3d" data-bg="f0f5f1" aria-pressed="false" title="Pine" style="--swatch-fg:#1f4d3d;--swatch-bg:#f0f5f1"><span></span></button>
+              <button class="swatch" type="button" data-palette="indigo" data-fg="24326b" data-bg="eef1f8" aria-pressed="false" title="Indigo" style="--swatch-fg:#24326b;--swatch-bg:#eef1f8"><span></span></button>
+              <button class="swatch" type="button" data-palette="inverse" data-fg="f2efe8" data-bg="14130f" aria-pressed="false" title="Inverse" style="--swatch-fg:#f2efe8;--swatch-bg:#14130f"><span></span></button>
             </div>
           </div>
 
@@ -696,11 +869,24 @@ const homeHTML = `<!doctype html>
       zh: {
         brand: "码上生成", kind: "内容类型", dark: "暗色", light: "亮色",
         typeUrl: "网址", typeText: "纯文本", typeWifi: "WiFi", typeCard: "名片", typeMail: "邮件",
-        heading: "生成一段文本二维码",
-        subheading: "任意文字原样编码，扫码后以文本形式显示。",
+        openQR: "打开二维码",
+        headingUrl: "生成一个网址二维码",
+        headingText: "生成一段文本二维码",
+        headingWifi: "生成 WiFi 连接码",
+        headingCard: "生成电子名片 vCard",
+        headingMail: "生成写信二维码",
+        subheadingUrl: "扫码直接打开链接，适合海报、名片和活动物料。",
+        subheadingText: "任意文字原样编码，扫码后以文本形式显示。",
+        subheadingWifi: "客人扫码即可入网，无需口头告知密码。",
+        subheadingCard: "扫码一键存入通讯录，字段留空则不写入。",
+        subheadingMail: "扫码打开邮件应用，收件人与主题已填好。",
+        linkLabel: "链接地址", ssid: "网络名称 SSID", enc: "加密方式", nopass: "无密码",
+        password: "密码", hidden: "隐藏网络（不广播 SSID）",
+        cardName: "姓名", cardOrg: "公司", cardTitle: "职位", cardTel: "电话", cardEmail: "邮箱", cardSite: "网站",
+        mailTo: "收件人", mailSubject: "主题", mailBody: "正文",
         textLabel: "文本内容", encoded: "编码内容", preview: "实时预览",
         download: "下载", copyImg: "复制图片", copyLink: "复制链接",
-        size: "导出尺寸", format: "格式", level: "容错等级", margin: "留白边距",
+        size: "导出尺寸", format: "格式", color: "配色", level: "容错等级", margin: "留白边距",
         filename: "文件名", modules: "模块",
         copiedLink: "链接已复制。", copiedImage: "图片已复制。", clipboardUnavailable: "当前环境不可用剪贴板。",
         hints: {
@@ -713,11 +899,24 @@ const homeHTML = `<!doctype html>
       en: {
         brand: "QR Studio", kind: "Content type", dark: "Dark", light: "Light",
         typeUrl: "URL", typeText: "Text", typeWifi: "Wi-Fi", typeCard: "vCard", typeMail: "Email",
-        heading: "Make a text QR code",
-        subheading: "Any characters, encoded verbatim and shown as text.",
+        openQR: "Open QR Code",
+        headingUrl: "Make a link QR code",
+        headingText: "Make a text QR code",
+        headingWifi: "Make a Wi-Fi join code",
+        headingCard: "Make a digital business card",
+        headingMail: "Make a compose-email code",
+        subheadingUrl: "Scans straight to the page - posters, cards, event signage.",
+        subheadingText: "Any characters, encoded verbatim and shown as text.",
+        subheadingWifi: "Guests scan to connect - no reading passwords aloud.",
+        subheadingCard: "Saves to contacts in one tap. Blank fields are omitted.",
+        subheadingMail: "Opens the mail app with recipient and subject prefilled.",
+        linkLabel: "Destination URL", ssid: "Network name (SSID)", enc: "Security", nopass: "None",
+        password: "Password", hidden: "Hidden network (SSID not broadcast)",
+        cardName: "Name", cardOrg: "Company", cardTitle: "Role", cardTel: "Phone", cardEmail: "Email", cardSite: "Website",
+        mailTo: "To", mailSubject: "Subject", mailBody: "Body",
         textLabel: "Plain text", encoded: "Encoded payload", preview: "Live preview",
         download: "Download", copyImg: "Copy image", copyLink: "Copy link",
-        size: "Export size", format: "Format", level: "Error correction", margin: "Quiet zone",
+        size: "Export size", format: "Format", color: "Colour", level: "Error correction", margin: "Quiet zone",
         filename: "File name", modules: "modules",
         copiedLink: "Link copied.", copiedImage: "Image copied.", clipboardUnavailable: "Clipboard is unavailable.",
         hints: {
@@ -730,7 +929,23 @@ const homeHTML = `<!doctype html>
     };
 
     const app = document.querySelector("#app");
+    const heading = document.querySelector("#heading");
+    const subheading = document.querySelector("#subheading");
     const text = document.querySelector("#text");
+    const url = document.querySelector("#url");
+    const ssid = document.querySelector("#ssid");
+    const password = document.querySelector("#password");
+    const passwordField = document.querySelector("#password-field");
+    const hidden = document.querySelector("#hidden");
+    const cardName = document.querySelector("#card-name");
+    const cardOrg = document.querySelector("#card-org");
+    const cardTitle = document.querySelector("#card-title");
+    const cardTel = document.querySelector("#card-tel");
+    const cardEmail = document.querySelector("#card-email");
+    const cardSite = document.querySelector("#card-site");
+    const mailTo = document.querySelector("#mail-to");
+    const mailSubject = document.querySelector("#mail-subject");
+    const mailBody = document.querySelector("#mail-body");
     const size = document.querySelector("#size");
     const margin = document.querySelector("#margin");
     const filename = document.querySelector("#filename");
@@ -746,7 +961,17 @@ const homeHTML = `<!doctype html>
     const toast = document.querySelector("#toast");
     const sheet = document.querySelector("#sheet");
     const scrim = document.querySelector("#scrim");
-    const state = { lang: "zh", theme: "dark", format: "png", level: "m" };
+    const state = {
+      lang: "zh",
+      theme: "dark",
+      kind: "wifi",
+      format: "png",
+      level: "m",
+      enc: "WPA",
+      hidden: false,
+      fg: "14130f",
+      bg: "ffffff"
+    };
 
     function t(key) {
       return I18N[state.lang][key];
@@ -756,12 +981,56 @@ const homeHTML = `<!doctype html>
       return (value || "qrcode").trim().replace(/[\/\\?#]+/g, "-") || "qrcode";
     }
 
+    function escapeWiFi(value) {
+      return value.replace(/([\\;,":])/g, "\\$1");
+    }
+
+    function vcardLine(name, value) {
+      return value ? name + ":" + value : "";
+    }
+
+    function payloadValue() {
+      if (state.kind === "url") {
+        return url.value || "";
+      }
+      if (state.kind === "wifi") {
+        const security = state.enc === "nopass" ? "nopass" : state.enc;
+        return "WIFI:T:" + security + ";S:" + escapeWiFi(ssid.value || "") + ";" +
+          (state.enc === "nopass" ? "" : "P:" + escapeWiFi(password.value || "") + ";") +
+          (state.hidden ? "H:true;" : "") + ";";
+      }
+      if (state.kind === "card") {
+        return [
+          "BEGIN:VCARD",
+          "VERSION:3.0",
+          vcardLine("N", cardName.value),
+          vcardLine("FN", cardName.value),
+          vcardLine("ORG", cardOrg.value),
+          vcardLine("TITLE", cardTitle.value),
+          vcardLine("TEL", cardTel.value),
+          vcardLine("EMAIL", cardEmail.value),
+          vcardLine("URL", cardSite.value),
+          "END:VCARD"
+        ].filter(Boolean).join("\n");
+      }
+      if (state.kind === "mail") {
+        const params = new URLSearchParams();
+        if (mailSubject.value) params.set("subject", mailSubject.value);
+        if (mailBody.value) params.set("body", mailBody.value);
+        const query = params.toString();
+        return "mailto:" + (mailTo.value || "") + (query ? "?" + query : "");
+      }
+      return text.value || "";
+    }
+
     function buildURL() {
       const params = new URLSearchParams();
-      params.set("text", text.value || "");
+      params.set("text", payloadValue());
       params.set("size", size.value || "256");
       params.set("level", state.level);
       params.set("margin", margin.value || "4");
+      params.set("fg", state.fg);
+      params.set("bg", state.bg);
       return "/" + encodeURIComponent(cleanName(filename.value)) + "." + state.format + "?" + params.toString();
     }
 
@@ -801,6 +1070,7 @@ const homeHTML = `<!doctype html>
       const url = buildURL();
       const upper = state.format.toUpperCase();
       const info = size.value + " x " + size.value + " · " + upper;
+      const payloadText = payloadValue();
 
       image.src = url;
       miniImage.src = url;
@@ -808,14 +1078,31 @@ const homeHTML = `<!doctype html>
       link.textContent = url;
       meta.textContent = info;
       mobileMeta.textContent = info + " · " + state.level.toUpperCase();
-      payload.textContent = text.value || " ";
-      count.textContent = text.value.length + " / 2953";
+      payload.textContent = payloadText || " ";
+      count.textContent = (text.value || "").length + " / 2953";
       ext.textContent = "." + state.format;
       document.querySelector("#size-value").textContent = size.value;
       document.querySelector("#margin-value").textContent = margin.value;
       document.querySelector("#download").textContent = t("download") + " " + upper;
       document.querySelector("#mobile-download").textContent = t("download");
       levelHint.textContent = I18N[state.lang].hints[state.level];
+    }
+
+    function setKind(kind) {
+      state.kind = kind;
+      document.querySelectorAll("[data-kind]").forEach((button) => {
+        if (button.dataset.kind === kind) {
+          button.setAttribute("aria-current", "page");
+        } else {
+          button.removeAttribute("aria-current");
+        }
+      });
+      document.querySelectorAll("[data-panel]").forEach((panel) => {
+        panel.dataset.active = panel.dataset.panel === kind ? "true" : "false";
+      });
+      heading.textContent = I18N[state.lang]["heading" + kind[0].toUpperCase() + kind.slice(1)];
+      subheading.textContent = I18N[state.lang]["subheading" + kind[0].toUpperCase() + kind.slice(1)];
+      refresh();
     }
 
     function applyLang(lang) {
@@ -828,6 +1115,7 @@ const homeHTML = `<!doctype html>
       document.querySelectorAll("[data-lang]").forEach((button) => {
         button.setAttribute("aria-pressed", button.dataset.lang === lang ? "true" : "false");
       });
+      setKind(state.kind);
       refresh();
     }
 
@@ -838,10 +1126,15 @@ const homeHTML = `<!doctype html>
       document.querySelector("#theme [data-i18n]").textContent = I18N[state.lang][theme === "dark" ? "dark" : "light"];
     }
 
-    text.addEventListener("input", refresh);
+    document.querySelectorAll("input, textarea").forEach((input) => {
+      input.addEventListener("input", refresh);
+    });
     size.addEventListener("input", refresh);
     margin.addEventListener("input", refresh);
-    filename.addEventListener("input", refresh);
+    document.querySelector("#qr-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      window.location.href = buildURL();
+    });
     document.querySelector("#download").addEventListener("click", downloadCurrent);
     document.querySelector("#mobile-download").addEventListener("click", downloadCurrent);
     document.querySelector("#open-sheet").addEventListener("click", () => setSheet(true));
@@ -854,6 +1147,36 @@ const homeHTML = `<!doctype html>
         setPressed("[data-format]", "data-format", state.format);
         refresh();
       });
+    });
+
+    document.querySelectorAll("[data-enc]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.enc = button.dataset.enc;
+        setPressed("[data-enc]", "data-enc", state.enc);
+        passwordField.style.display = state.enc === "nopass" ? "none" : "";
+        refresh();
+      });
+    });
+
+    document.querySelectorAll("[data-palette]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.fg = button.dataset.fg;
+        state.bg = button.dataset.bg;
+        setPressed("[data-palette]", "data-palette", button.dataset.palette);
+        document.querySelector(".qr-frame").style.background = "#" + state.bg;
+        document.querySelector(".mini").style.background = "#" + state.bg;
+        refresh();
+      });
+    });
+
+    hidden.addEventListener("click", () => {
+      state.hidden = !state.hidden;
+      hidden.setAttribute("aria-pressed", state.hidden ? "true" : "false");
+      refresh();
+    });
+
+    document.querySelectorAll("[data-kind]").forEach((button) => {
+      button.addEventListener("click", () => setKind(button.dataset.kind));
     });
 
     document.querySelectorAll("[data-level]").forEach((button) => {

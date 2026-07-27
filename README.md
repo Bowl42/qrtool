@@ -48,6 +48,8 @@ Query parameters:
 | `size` | `256` | PNG size in pixels, from `64` to `2048` |
 | `level` | `m` | Error correction level: `l`, `m`, `q`, or `h` |
 | `margin` | `4` | Quiet-zone modules, from `0` to `20` |
+| `fg` | `000000` | Foreground color as a 6-digit hex value |
+| `bg` | `ffffff` | Background color as a 6-digit hex value |
 
 Supported output formats:
 

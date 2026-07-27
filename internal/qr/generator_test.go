@@ -1,6 +1,7 @@
 package qr
 
 import (
+	"image/color"
 	"strings"
 	"testing"
 )
@@ -43,6 +44,29 @@ func TestGenerateSVG(t *testing.T) {
 	}
 }
 
+func TestGenerateSVGUsesColors(t *testing.T) {
+	image, err := Generate(Options{
+		Text:       "hello",
+		Format:     FormatSVG,
+		Level:      LevelMedium,
+		Size:       256,
+		Margin:     4,
+		Foreground: colorRGBA(0x12, 0x34, 0x56),
+		Background: colorRGBA(0xab, 0xcd, 0xef),
+	})
+	if err != nil {
+		t.Fatalf("Generate() error = %v", err)
+	}
+
+	body := string(image.Body)
+	if !strings.Contains(body, `fill="#abcdef"`) {
+		t.Fatalf("missing background color: %s", body)
+	}
+	if !strings.Contains(body, `fill="#123456"`) {
+		t.Fatalf("missing foreground color: %s", body)
+	}
+}
+
 func TestParseFormat(t *testing.T) {
 	if _, err := ParseFormat("svg"); err != nil {
 		t.Fatalf("ParseFormat() error = %v", err)
@@ -50,6 +74,10 @@ func TestParseFormat(t *testing.T) {
 	if _, err := ParseFormat("jpg"); err == nil {
 		t.Fatal("expected error")
 	}
+}
+
+func colorRGBA(r, g, b uint8) color.RGBA {
+	return color.RGBA{R: r, G: g, B: b, A: 255}
 }
 
 func TestParseLevel(t *testing.T) {

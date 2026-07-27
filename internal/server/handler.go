@@ -44,11 +44,13 @@ func handleQR(w http.ResponseWriter, r *http.Request) {
 	}
 
 	image, err := qr.Generate(qr.Options{
-		Text:   p.Text,
-		Format: p.Format,
-		Level:  p.Level,
-		Size:   p.Size,
-		Margin: p.Margin,
+		Text:       p.Text,
+		Format:     p.Format,
+		Level:      p.Level,
+		Size:       p.Size,
+		Margin:     p.Margin,
+		Foreground: p.Foreground,
+		Background: p.Background,
 	})
 	if err != nil {
 		http.Error(w, "failed to generate qr", http.StatusInternalServerError)
@@ -74,6 +76,18 @@ func contentDisposition(p params) string {
 }
 
 func makeETag(p params) string {
-	hash := sha256.Sum256([]byte(fmt.Sprintf("qr|%s|%s|%d|%d|%s", p.Format, p.Text, p.Size, p.Margin, p.Level)))
+	hash := sha256.Sum256([]byte(fmt.Sprintf("qr|%s|%s|%d|%d|%s|%02x%02x%02x|%02x%02x%02x",
+		p.Format,
+		p.Text,
+		p.Size,
+		p.Margin,
+		p.Level,
+		p.Foreground.R,
+		p.Foreground.G,
+		p.Foreground.B,
+		p.Background.R,
+		p.Background.G,
+		p.Background.B,
+	)))
 	return `"` + hex.EncodeToString(hash[:]) + `"`
 }
