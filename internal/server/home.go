@@ -69,6 +69,8 @@ const homeHTML = `<!doctype html>
       background: var(--panel);
       outline: none;
       padding: 14px 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 14px;
     }
     input:focus, textarea:focus, select:focus { border-color: var(--accent); }
     textarea {
@@ -747,18 +749,7 @@ const homeHTML = `<!doctype html>
             </label>
           </div>
 
-          <button class="download" type="submit" data-i18n="openQR">打开二维码</button>
         </form>
-
-        <template id="old-text-template">
-          <label>
-            <div class="label-row">
-              <span class="eyebrow mono" data-i18n="textLabel">文本内容</span>
-              <span class="count mono">5 / 2953</span>
-            </div>
-            <textarea maxlength="2953">hello</textarea>
-          </label>
-        </template>
 
         <section class="encoded" aria-label="Encoded payload">
           <div class="eyebrow mono" data-i18n="encoded">编码内容</div>
@@ -797,14 +788,6 @@ const homeHTML = `<!doctype html>
           </label>
 
           <div class="control">
-            <div class="eyebrow mono" data-i18n="format">格式</div>
-            <div class="chip-row" id="format-row">
-              <button class="chip mono" type="button" data-format="png" aria-pressed="true">PNG</button>
-              <button class="chip mono" type="button" data-format="svg" aria-pressed="false">SVG</button>
-            </div>
-          </div>
-
-          <div class="control">
             <div class="eyebrow mono" data-i18n="color">配色</div>
             <div class="palette-row" id="palette-row">
               <button class="swatch" type="button" data-palette="classic" data-fg="14130f" data-bg="ffffff" aria-pressed="true" title="Classic" style="--swatch-fg:#14130f;--swatch-bg:#ffffff"><span></span></button>
@@ -812,6 +795,14 @@ const homeHTML = `<!doctype html>
               <button class="swatch" type="button" data-palette="pine" data-fg="1f4d3d" data-bg="f0f5f1" aria-pressed="false" title="Pine" style="--swatch-fg:#1f4d3d;--swatch-bg:#f0f5f1"><span></span></button>
               <button class="swatch" type="button" data-palette="indigo" data-fg="24326b" data-bg="eef1f8" aria-pressed="false" title="Indigo" style="--swatch-fg:#24326b;--swatch-bg:#eef1f8"><span></span></button>
               <button class="swatch" type="button" data-palette="inverse" data-fg="f2efe8" data-bg="14130f" aria-pressed="false" title="Inverse" style="--swatch-fg:#f2efe8;--swatch-bg:#14130f"><span></span></button>
+            </div>
+          </div>
+
+          <div class="control">
+            <div class="eyebrow mono" data-i18n="format">格式</div>
+            <div class="chip-row" id="format-row">
+              <button class="chip mono" type="button" data-format="png" aria-pressed="true">PNG</button>
+              <button class="chip mono" type="button" data-format="svg" aria-pressed="false">SVG</button>
             </div>
           </div>
 
