@@ -85,20 +85,12 @@ const homeHTML = `<!doctype html>
     .mono {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
-    .topbar {
-      min-height: 60px;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      padding: 18px 26px;
-    }
     .brand {
       display: flex;
       align-items: center;
       gap: 12px;
       min-width: 0;
+      padding: 4px 12px 24px;
     }
     .mark {
       width: 20px;
@@ -122,6 +114,8 @@ const homeHTML = `<!doctype html>
       display: flex;
       align-items: center;
       gap: 8px;
+      margin-top: auto;
+      padding: 18px 12px 3px;
     }
     .seg {
       display: flex;
@@ -161,7 +155,8 @@ const homeHTML = `<!doctype html>
     .frame {
       display: grid;
       grid-template-columns: 212px minmax(0, 1fr) 396px;
-      min-height: calc(100vh - 60px);
+      align-content: start;
+      min-height: 100vh;
     }
     .rail {
       display: flex;
@@ -170,17 +165,25 @@ const homeHTML = `<!doctype html>
       padding: 16px 12px;
       border-right: 1px solid var(--line);
     }
-    .eyebrow, .railcap {
-      color: var(--dim);
+    .rail-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .eyebrow {
+      color: var(--muted);
       font-size: 10.5px;
       letter-spacing: .14em;
       text-transform: uppercase;
     }
     .railcap {
+      color: var(--dim);
+      font-size: 10.5px;
+      text-transform: uppercase;
       padding: 6px 12px 12px;
       letter-spacing: .16em;
     }
-    .rail button {
+    .rail-list button {
       border: 0;
       border-radius: 9px;
       background: transparent;
@@ -192,19 +195,19 @@ const homeHTML = `<!doctype html>
       text-align: left;
       white-space: nowrap;
     }
-    .rail button[aria-current="page"] {
+    .rail-list button[aria-current="page"] {
       background: var(--sel);
       color: var(--fg);
     }
-    .rail button span {
+    .rail-list button span {
       color: var(--num);
       font-size: 10px;
     }
-    .rail button b {
+    .rail-list button b {
       font-size: 13.5px;
       font-weight: 500;
     }
-    .rail button[aria-current="page"] span { color: var(--accent); }
+    .rail-list button[aria-current="page"] span { color: var(--accent); }
     main {
       max-width: 640px;
       padding: 34px 40px 60px;
@@ -485,8 +488,10 @@ const homeHTML = `<!doctype html>
     @media (max-width: 1080px) {
       .frame { grid-template-columns: 1fr; }
       .rail {
+        display: flex;
         flex-direction: row;
         align-items: center;
+        gap: 10px;
         overflow-x: auto;
         scrollbar-width: none;
         border-right: 0;
@@ -497,11 +502,31 @@ const homeHTML = `<!doctype html>
         background: var(--bg);
         padding: 10px;
       }
+      .brand {
+        flex: none;
+        padding: 0 6px;
+      }
+      .top-actions {
+        flex: none;
+        order: 3;
+        margin-top: 0;
+        padding: 0;
+        justify-content: flex-end;
+      }
+      .rail-list {
+        flex: 1 0 auto;
+        flex-direction: row;
+        align-items: center;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
       .rail::-webkit-scrollbar { display: none; }
+      .rail-list::-webkit-scrollbar { display: none; }
       .railcap { display: none; }
-      .rail button {
+      .rail-list button {
         flex: none;
         padding: 12px 14px;
+        align-self: center;
       }
       main {
         max-width: none;
@@ -613,12 +638,56 @@ const homeHTML = `<!doctype html>
       }
     }
     @media (max-width: 640px) {
-      .topbar {
-        padding: 14px 16px;
-        flex-wrap: wrap;
+      .rail {
+        display: grid;
+        grid-template-areas:
+          "brand actions"
+          "tabs tabs";
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 14px 10px;
+        overflow: hidden;
+        padding: 16px;
+      }
+      .brand {
+        grid-area: brand;
+        flex: none;
+        padding: 0;
       }
       .brand-code { display: none; }
-      .top-actions { margin-left: 32px; }
+      .brand-name { font-size: 15px; }
+      .top-actions {
+        grid-area: actions;
+        flex: none;
+        order: 0;
+        margin-left: 0;
+        justify-content: flex-end;
+      }
+      .seg button, .theme {
+        padding: 7px 11px;
+      }
+      .rail-list {
+        grid-area: tabs;
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+      .rail-list button {
+        flex: 0 0 56px;
+        justify-content: center;
+        gap: 0;
+        padding: 0 6px;
+        height: 40px;
+        min-width: 56px;
+        align-self: center;
+      }
+      .rail-list button span { display: none; }
+      .rail-list button b { font-size: 13px; }
       main { padding: 24px 16px 132px; }
       h1 { font-size: 24px; }
       .field-grid { grid-template-columns: 1fr; }
@@ -630,32 +699,31 @@ const homeHTML = `<!doctype html>
 </head>
 <body>
   <div class="app" id="app" data-theme="dark">
-    <header class="topbar">
-      <div class="brand">
-        <div class="mark" aria-hidden="true"></div>
-        <div class="brand-name" data-i18n="brand">码上生成</div>
-        <div class="brand-code mono">qrtool</div>
-      </div>
-      <div class="top-actions">
-        <div class="seg" aria-label="Language">
-          <button class="mono" type="button" data-lang="zh" aria-pressed="true">中</button>
-          <button class="mono" type="button" data-lang="en" aria-pressed="false">EN</button>
-        </div>
-        <button class="theme mono" id="theme" type="button" title="Toggle theme">
-          <span class="dot" aria-hidden="true"></span>
-          <span data-i18n="dark">暗色</span>
-        </button>
-      </div>
-    </header>
-
     <div class="frame">
       <nav class="rail" aria-label="Code type">
-        <div class="railcap mono" data-i18n="kind">内容类型</div>
-        <button type="button" data-kind="url"><span class="mono">01</span><b data-i18n="typeUrl">网址</b></button>
-        <button type="button" data-kind="text"><span class="mono">02</span><b data-i18n="typeText">纯文本</b></button>
-        <button type="button" data-kind="wifi" aria-current="page"><span class="mono">03</span><b data-i18n="typeWifi">WiFi</b></button>
-        <button type="button" data-kind="card"><span class="mono">04</span><b data-i18n="typeCard">名片</b></button>
-        <button type="button" data-kind="mail"><span class="mono">05</span><b data-i18n="typeMail">邮件</b></button>
+        <div class="brand">
+          <div class="mark" aria-hidden="true"></div>
+          <div class="brand-name" data-i18n="brand">码上生成</div>
+          <div class="brand-code mono">qrtool</div>
+        </div>
+        <div class="rail-list">
+          <div class="railcap mono" data-i18n="kind">内容类型</div>
+          <button type="button" data-kind="url"><span class="mono">01</span><b data-i18n="typeUrl">网址</b></button>
+          <button type="button" data-kind="text"><span class="mono">02</span><b data-i18n="typeText">纯文本</b></button>
+          <button type="button" data-kind="wifi" aria-current="page"><span class="mono">03</span><b data-i18n="typeWifi">WiFi</b></button>
+          <button type="button" data-kind="card"><span class="mono">04</span><b data-i18n="typeCard">名片</b></button>
+          <button type="button" data-kind="mail"><span class="mono">05</span><b data-i18n="typeMail">邮件</b></button>
+        </div>
+        <div class="top-actions">
+          <div class="seg" aria-label="Language">
+            <button class="mono" type="button" data-lang="zh" aria-pressed="true">中</button>
+            <button class="mono" type="button" data-lang="en" aria-pressed="false">EN</button>
+          </div>
+          <button class="theme mono" id="theme" type="button" title="Toggle theme">
+            <span class="dot" aria-hidden="true"></span>
+            <span data-i18n="dark">暗色</span>
+          </button>
+        </div>
       </nav>
 
       <main>
